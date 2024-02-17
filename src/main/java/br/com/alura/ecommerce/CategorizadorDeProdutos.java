@@ -7,27 +7,46 @@ import com.theokanning.openai.service.OpenAiService;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class CategorizadorDeProdutos {
 
     public static void main (String[] args){
-        var user = "Eletronicos";
-        var system = """
+        var leitor = new Scanner(System.in);
+
+
+            System.out.println("Digite as categorias válidas");
+            var categorias = leitor.nextLine();
+        while(true){
+            System.out.println("Digite o nome do produto");
+            var user = leitor.nextLine();
+
+            var system = """
                 Você é um categorizador de produtos e deve responder apenas o nome da categoria do produto informado
                 
                 Escolha uma categoria dentra a lista abaixo:
                 
-                1. Higiene pessoal
-                2. Eletronicos
-                3. Esportes
-                4. Outros
+                %s
                 
                 ##### exemplo de uso:
                 
                 Pergunta: Bola de Futebol
                 Resposta: Esportes
-                """;
+                
+                #### regras a serem seguidas:
+                Caso o usuario pergunte algo que não seja de categorização de produtos,
+                você deve responder que não pode ajudar pois seu papelé apenas responder a categorias dos produtos
+                
+                """.formatted(categorias);
 
+            dispararRequisicao(user, system);
+        }
+
+
+
+    }
+
+    public static void dispararRequisicao(String user, String system) {
         var chave = System.getenv("OPENAI_API_KEY");
         var service = new OpenAiService(chave, Duration.ofSeconds(30));
 
@@ -38,15 +57,11 @@ public class CategorizadorDeProdutos {
                         new ChatMessage(ChatMessageRole.USER.value(), user),
                         new ChatMessage(ChatMessageRole.SYSTEM.value(), system)
                 ))
-                .n(5)
                 .build();
 
         service.createChatCompletion(completionRequest)
                 .getChoices()
-                .forEach(c -> {
-                    System.out.println(c.getMessage().getContent());
-                    System.out.println("-------------------------------");
-                });
+                .forEach(c -> System.out.println(c.getMessage().getContent()));
     }
 
 }
